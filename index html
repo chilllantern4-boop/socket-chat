@@ -36,7 +36,7 @@ body {
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-const socket = io("https://PASTE-YOUR-RENDER-URL-HERE");
+const socket = io("https://cdn.socket.io/4.7.2/socket.io.min.js");
 
 const messages = document.getElementById("messages");
 const input = document.getElementById("input");
