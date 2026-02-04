@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+.chat {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+}
+.messages {
+  height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="chat">
+  <div class="messages" id="messages"></div>
+  <input id="input" placeholder="Message">
+  <button onclick="send()">Send</button>
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+const socket = io("https://PASTE-YOUR-RENDER-URL-HERE");
+
+const messages = document.getElementById("messages");
+const input = document.getElementById("input");
+
+socket.on("message", msg => {
+  const div = document.createElement("div");
+  div.textContent = msg;
+  messages.appendChild(div);
+});
+
+function send() {
+  if (input.value.trim()) {
+    socket.emit("message", input.value);
+    input.value = "";
+  }
+}
+</script>
+
+</body>
+</html>
