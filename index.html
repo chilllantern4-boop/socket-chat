@@ -36,6 +36,10 @@ body {
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
+
+// Ask the user for their name
+const username = prompt("Enter your name:") || "Anonymous";
+  
 const socket = io("https://socket-chat-server-mm0n.onrender.com");
 
 socket.on("connect", () => {
@@ -51,15 +55,12 @@ const messages = document.getElementById("messages");
 const input = document.getElementById("input");
 
 socket.on("message", msg => {
+  // Skip your own message already shown
+  if (msg.user === username) return;
+
   const div = document.createElement("div");
-  div.textContent = msg;
-
-  // If it’s your own message, skip or style differently
-  if (messages.lastChild && messages.lastChild.textContent === msg) {
-    return; // already displayed
-  }
-
-  div.classList.add("friend"); // or just default style
+  div.textContent = `${msg.user}: ${msg.text}`;
+  div.classList.add("friend");
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 });
@@ -68,12 +69,12 @@ function send() {
   const text = input.value.trim();
   if (!text) return;
 
-  // Send message to the server
-  socket.emit("message", text);
+  // Send both name and message
+  socket.emit("message", { user: username, text: text });
 
-  // Optional: show your own message immediately
+  // Show your own message instantly
   const div = document.createElement("div");
-  div.textContent = text;
+  div.textContent = `${username}: ${text}`;
   div.classList.add("you");
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
