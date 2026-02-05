@@ -1,29 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chat</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Socket.IO Chat</title>
 <style>
-body {
-  font-family: Arial;
-  background: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-.chat {
-  width: 100%;
-  max-width: 400px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 10px;
-}
-.messages {
-  height: 300px;
-  overflow-y: auto;
-  margin-bottom: 10px;
-}
+body { font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; padding:20px; }
+.chat { width:100%; max-width:400px; background:#fff; border-radius:12px; padding:10px; }
+.messages { height:300px; overflow-y:auto; margin-bottom:10px; border:1px solid #ccc; padding:5px; border-radius:8px; }
+input { width:70%; padding:10px; }
+button { width:28%; padding:10px; margin-left:2%; }
+.message-you { text-align:right; color:blue; }
+.message-friend { text-align:left; color:green; }
 </style>
 </head>
 <body>
@@ -36,51 +24,43 @@ body {
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
+  const messages = document.getElementById("messages");
+  const input = document.getElementById("input");
 
-// Ask the user for their name
-const username = prompt("Enter your name:") || "Anonymous";
-  
-const socket = io("https://socket-chat-server-mm0n.onrender.com");
+  // 🔹 REPLACE with your Render server URL
+  const socket = io("https://YOUR-RENDER-URL.onrender.com");
 
-socket.on("connect", () => {
-  alert("CONNECTED TO SERVER");
-});
+  // Test connection
+  socket.on("connect", () => {
+    console.log("Connected to server ✅");
+  });
 
-socket.on("connect_error", (err) => {
-  alert("CONNECTION ERROR");
-  console.error(err);
-});
-  
-const messages = document.getElementById("messages");
-const input = document.getElementById("input");
+  // Listen for messages from others
+  socket.on("message", msg => {
+    const div = document.createElement("div");
+    div.textContent = msg;
+    div.classList.add("message-friend");
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  });
 
-socket.on("message", msg => {
-  // Skip your own message already shown
-  if (msg.user === username) return;
+  // Send message
+  function send() {
+    const text = input.value.trim();
+    if (!text) return;
 
-  const div = document.createElement("div");
-  div.textContent = `${msg.user}: ${msg.text}`;
-  div.classList.add("friend");
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-});
+    // Emit to server
+    socket.emit("message", text);
 
-function send() {
-  const text = input.value.trim();
-  if (!text) return;
+    // Show on your own screen
+    const div = document.createElement("div");
+    div.textContent = text;
+    div.classList.add("message-you");
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
 
-  // Send both name and message
-  socket.emit("message", { user: username, text: text });
-
-  // Show your own message instantly
-  const div = document.createElement("div");
-  div.textContent = `${username}: ${text}`;
-  div.classList.add("you");
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-
-  input.value = "";
-}
+    input.value = "";
+  }
 </script>
 
 </body>
