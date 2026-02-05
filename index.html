@@ -5,21 +5,88 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Live Chat</title>
 <style>
-body { font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; padding:20px; }
-.chat { width:100%; max-width:400px; background:#fff; border-radius:12px; padding:10px; }
-.messages { height:300px; overflow-y:auto; margin-bottom:10px; border:1px solid #ccc; padding:5px; border-radius:8px; }
-input { width:70%; padding:10px; }
-button { width:28%; padding:10px; margin-left:2%; }
-.message-you { text-align:right; color:blue; }
-.message-friend { text-align:left; color:green; }
+body {
+  font-family: Arial, sans-serif;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  margin: 0;
+}
+
+.chat {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #e9ecef;
+}
+
+.message {
+  margin: 5px 0;
+  padding: 8px 12px;
+  border-radius: 20px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.you {
+  align-self: flex-end;
+  background-color: #2563eb;
+  color: white;
+}
+
+.friend {
+  align-self: flex-start;
+  background-color: #d1d5db;
+  color: black;
+}
+
+input {
+  padding: 10px;
+  flex: 1;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+button {
+  padding: 10px 15px;
+  margin-left: 5px;
+  border: none;
+  border-radius: 20px;
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.input-area {
+  display: flex;
+}
 </style>
 </head>
 <body>
 
 <div class="chat">
   <div class="messages" id="messages"></div>
-  <input id="input" placeholder="Type a message">
-  <button onclick="send()">Send</button>
+  <div class="input-area">
+    <input id="input" placeholder="Type a message">
+    <button onclick="send()">Send</button>
+  </div>
 </div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -28,17 +95,19 @@ const messages = document.getElementById("messages");
 const input = document.getElementById("input");
 
 // 🔹 Replace with your Render URL
-const socket = io("https://socket-chat-server-mm0n.onrender.com");
+const socket = io("https://YOUR-RENDER-URL.onrender.com");
 
-// Show connection status in console
+// Show connection status
 socket.on("connect", () => console.log("Connected ✅"));
-socket.on("connect_error", (err) => console.error("Connection error:", err));
 
-// Receive messages from others
-socket.on("message", msg => {
+// Receive messages
+socket.on("message", data => {
+  // Only show messages that are NOT your own
+  if (data.id === socket.id) return;
+
   const div = document.createElement("div");
-  div.textContent = msg;
-  div.classList.add("message-friend");
+  div.textContent = data.text;
+  div.classList.add("message", "friend");
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 });
@@ -48,13 +117,13 @@ function send() {
   const text = input.value.trim();
   if (!text) return;
 
-  // Emit to server
-  socket.emit("message", text);
+  // Emit message with your socket ID
+  socket.emit("message", { text: text, id: socket.id });
 
-  // Show locally
+  // Show locally as "you"
   const div = document.createElement("div");
   div.textContent = text;
-  div.classList.add("message-you");
+  div.classList.add("message", "you");
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 
