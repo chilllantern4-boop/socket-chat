@@ -98,8 +98,47 @@ const input = document.getElementById("input");
 // Connect to server
 const socket = io("https://socket-chat-server-mm0n.onrender.com");
 
-// Ask for room name (like a private chat ID)
-const room = prompt("Enter your chat room name:") || "default";
+// Ask for a room name
+let room = prompt("Enter your chat room name:").trim();
+if (!room) room = "default"; // fallback room
+
+// Connect to server
+const socket = io("https://YOUR-RENDER-URL.onrender.com");
+
+// Join the room immediately after connecting
+socket.on("connect", () => {
+  console.log("Connected! Joining room:", room);
+  socket.emit("join", room);
+});
+
+// Listen for messages in this room
+socket.on("message", data => {
+  if (data.id === socket.id) return; // skip your own messages
+
+  const div = document.createElement("div");
+  div.textContent = data.text;
+  div.classList.add("message", "friend");
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+});
+
+// Send message
+function send() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Emit message to the room
+  socket.emit("message", { room, text, id: socket.id });
+
+  // Show locally
+  const div = document.createElement("div");
+  div.textContent = text;
+  div.classList.add("message", "you");
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+
+  input.value = "";
+}
 
 // Join the room
 socket.emit("join", room);
