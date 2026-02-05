@@ -46,13 +46,12 @@ socket.on("connect", () => {
 
 // Receive messages from the room
 socket.on("message", data => {
+  // Ignore your own messages
+  if (data.id === socket.id) return;
+
   const div = document.createElement("div");
   div.textContent = data.text;
-
-  // Determine class
-  div.classList.add("message");
-  div.classList.add(data.id === socket.id ? "you" : "friend");
-
+  div.classList.add("message", "friend"); // only friend messages
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 });
