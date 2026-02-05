@@ -1,92 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Private Room Chat</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Chat</title>
 <style>
-  body { font-family: Arial, system-ui; background:#f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-  .chat { width:100%; max-width:420px; background:#fff; border-radius:12px; display:flex; flex-direction:column; height:80vh; box-shadow:0 10px 20px rgba(0,0,0,0.08); padding:12px; }
-  .messages { flex:1; overflow:auto; padding:10px; border-radius:8px; background:#eef2f7; margin-bottom:10px; display:flex; flex-direction:column; gap:8px; }
-  .message { max-width:80%; padding:10px 14px; border-radius:20px; word-wrap:break-word; }
-  .you { align-self:flex-end; background:#2563eb; color:#fff; }
-  .friend { align-self:flex-start; background:#e2e8f0; color:#111827; }
-  .input-area { display:flex; gap:8px; }
-  input { flex:1; padding:12px 14px; border-radius:20px; border:1px solid #cbd5e1; outline:none; }
-  button { padding:12px 16px; border-radius:20px; border:none; background:#2563eb; color:#fff; font-weight:600; cursor:pointer; }
-  @media (max-width:420px){ .chat{height:92vh;} }
+body {
+  font-family: Arial, system-ui;
+  margin:0;
+  padding:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#f0f2f5;
+}
+.chat {
+  width:100%;
+  max-width:420px;
+  height:90vh;
+  background:#fff;
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 10px 20px rgba(0,0,0,0.08);
+}
+.messages {
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  background:#eef2f7;
+}
+.message {
+  max-width:80%;
+  padding:10px 14px;
+  border-radius:20px;
+  word-wrap:break-word;
+}
+.you {
+  align-self:flex-end;
+  background:#2563eb;
+  color:#fff;
+}
+.friend {
+  align-self:flex-start;
+  background:#e2e8f0;
+  color:#111827;
+}
+.input-area {
+  display:flex;
+  padding:10px;
+  gap:8px;
+  border-top:1px solid #ccc;
+}
+input {
+  flex:1;
+  padding:12px 14px;
+  border-radius:20px;
+  border:1px solid #cbd5e1;
+  outline:none;
+}
+button {
+  padding:12px 16px;
+  border-radius:20px;
+  border:none;
+  background:#2563eb;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+@media(max-width:420px){ .chat{height:92vh;} }
 </style>
 </head>
 <body>
 
 <div class="chat">
   <div class="messages" id="messages"></div>
-
   <div class="input-area">
-    <input id="input" placeholder="Type a message..." autocomplete="off" />
+    <input id="input" placeholder="Type a message..." autocomplete="off"/>
     <button id="sendBtn">Send</button>
   </div>
 </div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-  const messages = document.getElementById('messages');
-  const input = document.getElementById('input');
-  const sendBtn = document.getElementById('sendBtn');
+const messages = document.getElementById('messages');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
 
-  // 🔹 Replace with your actual Render URL
-  const socket = io("https://YOUR-RENDER-URL.onrender.com");
+// 🔹 Replace with your Render URL
+const socket = io("https://socket-chat-server-mm0n.onrender.com");
 
-  // Ask user for room name (exact same name for both friends)
-  let room = prompt("Enter chat room name:").trim();
-  if (!room) room = "default";
+// Ask for room name
+let room = prompt("Enter chat room name:").trim();
+if (!room) room = "default";
 
-  // Join room once connected
-  socket.on("connect", () => {
-    console.log("Connected", socket.id);
-    socket.emit("join", room);
-  });
+// Join room after connecting
+socket.on("connect", () => {
+  console.log("Connected", socket.id);
+  socket.emit("join", room);
+});
 
-  // Receive messages sent by others (server broadcasts to others only)
-  socket.on("message", data => {
-    // Defensive check: do not show your own message if somehow broadcasted back
-    if (data.id === socket.id) return;
+// Display messages from server (friends)
+socket.on("message", data => {
+  appendMessage(data.text, 'friend');
+});
 
-    appendMessage(data.text, 'friend');
-  });
+// Helper to append messages
+function appendMessage(text, who){
+  const div = document.createElement('div');
+  div.textContent = text;
+  div.classList.add('message', who);
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
 
-  // Append message helper
-  function appendMessage(text, who) {
-    const div = document.createElement('div');
-    div.classList.add('message', who === 'you' ? 'you' : 'friend');
-    div.textContent = text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  }
+// Send message
+function send(){
+  const text = input.value.trim();
+  if(!text) return;
 
-  // Send handler: show locally and emit; server will send to other clients only
-  function send() {
-    const text = input.value.trim();
-    if (!text) return;
+  const payload = { room, text, id: socket.id, ts: Date.now() };
 
-    const payload = { room: room, text: text, id: socket.id, ts: Date.now() };
+  // Show locally
+  appendMessage(text, 'you');
 
-    // show locally
-    appendMessage(text, 'you');
+  // Send to server (server sends only to others in room)
+  socket.emit('message', payload);
 
-    // emit to server (server will broadcast to others in room)
-    socket.emit('message', payload);
+  input.value='';
+  input.focus();
+}
 
-    input.value = '';
-    input.focus();
-  }
-
-  // attach events
-  sendBtn.addEventListener('click', send);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
-
-  // optional: show history already delivered by server on join (server emits history to new socket)
-  // server emits 'message' events for history and they will be handled above
+// Send on button click or Enter
+sendBtn.addEventListener('click', send);
+input.addEventListener('keydown', e => { if(e.key==='Enter') send(); });
 </script>
 
 </body>
