@@ -3,80 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Chat</title>
+<title>Private Chat</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-  margin: 0;
-}
-
-.chat {
-  width: 100%;
-  max-width: 400px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  height: 80vh;
-}
-
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  background: #e9ecef;
-}
-
-.message {
-  margin: 5px 0;
-  padding: 8px 12px;
-  border-radius: 20px;
-  max-width: 80%;
-  word-wrap: break-word;
-}
-
-.you {
-  align-self: flex-end;
-  background-color: #2563eb;
-  color: white;
-}
-
-.friend {
-  align-self: flex-start;
-  background-color: #d1d5db;
-  color: black;
-}
-
-input {
-  padding: 10px;
-  flex: 1;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  outline: none;
-}
-
-button {
-  padding: 10px 15px;
-  margin-left: 5px;
-  border: none;
-  border-radius: 20px;
-  background-color: #2563eb;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.input-area {
-  display: flex;
-}
+body { font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; margin:0; padding:20px; }
+.chat { width:100%; max-width:400px; background:#fff; border-radius:12px; display:flex; flex-direction:column; height:80vh; padding:10px; }
+.messages { flex:1; overflow-y:auto; border:1px solid #ccc; padding:10px; border-radius:8px; background:#e9ecef; margin-bottom:10px; }
+.message { margin:5px 0; padding:8px 12px; border-radius:20px; max-width:80%; word-wrap:break-word; }
+.you { align-self:flex-end; background-color:#2563eb; color:white; }
+.friend { align-self:flex-start; background-color:#d1d5db; color:black; }
+.input-area { display:flex; }
+input { flex:1; padding:10px; border-radius:20px; border:1px solid #ccc; outline:none; }
+button { padding:10px 15px; margin-left:5px; border:none; border-radius:20px; background-color:#2563eb; color:white; font-weight:bold; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -90,77 +27,45 @@ button {
 </div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
 const messages = document.getElementById("messages");
 const input = document.getElementById("input");
 
-// Connect to server
-const socket = io("https://socket-chat-server-mm0n.onrender.com");
-
-// Ask for a room name
-let room = prompt("Enter your chat room name:").trim();
-if (!room) room = "default"; // fallback room
-
-// Connect to server
+// 🔹 Replace with your Render server URL
 const socket = io("https://YOUR-RENDER-URL.onrender.com");
 
-// Join the room immediately after connecting
+// Ask for room name
+let room = prompt("Enter your chat room name:").trim();
+if (!room) room = "default";
+
+// Join the room
 socket.on("connect", () => {
-  console.log("Connected! Joining room:", room);
+  console.log("Connected, joining room:", room);
   socket.emit("join", room);
 });
 
-// Listen for messages in this room
+// Receive messages from the room
 socket.on("message", data => {
-  if (data.id === socket.id) return; // skip your own messages
-
   const div = document.createElement("div");
   div.textContent = data.text;
-  div.classList.add("message", "friend");
+
+  // Determine class
+  div.classList.add("message");
+  div.classList.add(data.id === socket.id ? "you" : "friend");
+
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 });
 
-// Send message
+// Send a message
 function send() {
   const text = input.value.trim();
   if (!text) return;
 
-  // Emit message to the room
+  // Send to room
   socket.emit("message", { room, text, id: socket.id });
 
-  // Show locally
-  const div = document.createElement("div");
-  div.textContent = text;
-  div.classList.add("message", "you");
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-
-  input.value = "";
-}
-
-// Join the room
-socket.emit("join", room);
-
-// Receive messages in this room
-socket.on("message", data => {
-  if (data.id === socket.id) return; // skip your own messages
-
-  const div = document.createElement("div");
-  div.textContent = data.text;
-  div.classList.add("message", "friend");
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-});
-
-// Send messages to the room
-function send() {
-  const text = input.value.trim();
-  if (!text) return;
-
-  socket.emit("message", { room: room, text: text, id: socket.id });
-
+  // Show locally as "you"
   const div = document.createElement("div");
   div.textContent = text;
   div.classList.add("message", "you");
