@@ -38,6 +38,15 @@ body {
 <script>
 const socket = io("https://socket-chat-server-mm0n.onrender.com");
 
+socket.on("connect", () => {
+  alert("CONNECTED TO SERVER");
+});
+
+socket.on("connect_error", (err) => {
+  alert("CONNECTION ERROR");
+  console.error(err);
+});
+  
 const messages = document.getElementById("messages");
 const input = document.getElementById("input");
 
