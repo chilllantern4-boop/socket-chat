@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Socket.IO Chat</title>
+<title>Live Chat</title>
 <style>
 body { font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; padding:20px; }
 .chat { width:100%; max-width:400px; background:#fff; border-radius:12px; padding:10px; }
@@ -18,49 +18,48 @@ button { width:28%; padding:10px; margin-left:2%; }
 
 <div class="chat">
   <div class="messages" id="messages"></div>
-  <input id="input" placeholder="Message">
+  <input id="input" placeholder="Type a message">
   <button onclick="send()">Send</button>
 </div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-  const messages = document.getElementById("messages");
-  const input = document.getElementById("input");
+const messages = document.getElementById("messages");
+const input = document.getElementById("input");
 
-  // 🔹 REPLACE with your Render server URL
-  const socket = io("https://socket-chat-server-mm0n.onrender.com");
+// 🔹 Replace with your Render URL
+const socket = io("https://YOUR-RENDER-URL.onrender.com");
 
-  // Test connection
-  socket.on("connect", () => {
-    console.log("Connected to server ✅");
-  });
+// Show connection status in console
+socket.on("connect", () => console.log("Connected ✅"));
+socket.on("connect_error", (err) => console.error("Connection error:", err));
 
-  // Listen for messages from others
-  socket.on("message", msg => {
-    const div = document.createElement("div");
-    div.textContent = msg;
-    div.classList.add("message-friend");
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  });
+// Receive messages from others
+socket.on("message", msg => {
+  const div = document.createElement("div");
+  div.textContent = msg;
+  div.classList.add("message-friend");
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+});
 
-  // Send message
-  function send() {
-    const text = input.value.trim();
-    if (!text) return;
+// Send messages
+function send() {
+  const text = input.value.trim();
+  if (!text) return;
 
-    // Emit to server
-    socket.emit("message", text);
+  // Emit to server
+  socket.emit("message", text);
 
-    // Show on your own screen
-    const div = document.createElement("div");
-    div.textContent = text;
-    div.classList.add("message-you");
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
+  // Show locally
+  const div = document.createElement("div");
+  div.textContent = text;
+  div.classList.add("message-you");
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
 
-    input.value = "";
-  }
+  input.value = "";
+}
 </script>
 
 </body>
